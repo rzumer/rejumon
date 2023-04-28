@@ -57,7 +57,7 @@ fn main() {
     args = args[1..].to_vec();
 
     if args.is_empty() {
-        eprintln!("usage: {} <input>", program);
+        eprintln!("usage: {} [--name <name>] <input>", program);
         return;
     }
 
