@@ -9,7 +9,7 @@
 ※DQ2の形式はまだ実装されていない
 
 ## 使い方
-例:
+例①:
 ```sh
 >cargo run きへづみやしやねふりたすちなのへむびおの
 
@@ -34,4 +34,13 @@ GameData { name: ['ら', 'へ', 'え', '２'], experience: 58756, gold: 73, weap
 
 きへづみやしやねふりたすちなのへむろおの
 GameData { name: ['ら', 'ら', 'え', '２'], experience: 32900, gold: 73, weapon: 7, armor: 1, shield: 2, herbs: 0, keys: 0, items: [1, 4, 0, 0, 0, 0, 0, 0], progress_flags: [false, true, true, false, false], encryption_key: 3, checksum: 130 }
+```
+
+例② (`--name` 使用):
+```sh
+>cargo run -- --name らはえる きへづみやしやねふりたすちなのへむびおの
+
+Found 1 substitution(s):
+きへづみやしやねふりだすちなのへむびおの
+GameData { name: ['ら', 'は', 'え', 'る'], experience: 132, gold: 73, weapon: 2, armor: 2, shield: 0, herbs: 0, keys: 0, items: [0, 4, 0, 0, 0, 0, 0, 0], progress_flags: [false, false, false, false, false], encryption_key: 7, checksum: 130 }
 ```

@@ -156,7 +156,7 @@ fn decode(input: &str) -> Result<Vec<u8>, String> {
     }
 }
 
-fn process(input: &str) -> Result<String, String> {
+fn process(input: &str, name: Option<String>) -> Result<String, String> {
     if input.chars().count() != 20 {
         return Err("Input must be 20 characters.".to_string());
     }
@@ -179,6 +179,13 @@ fn process(input: &str) -> Result<String, String> {
             }
             if let Ok(decoded) = decode(&new_string) {
                 let data = GameData::from_bytes(decoded.as_slice());
+                // If the player name is known, ignore any substitutions where it is wrong.
+                if let Some(ref player_name) = name {
+                    let player_name_chars = player_name.chars().collect::<Vec<char>>();
+                    if player_name_chars != &data.name[..] {
+                        continue;
+                    }
+                }
                 substitutions.push((String::from(new_string), data));
             }
         }
@@ -186,7 +193,7 @@ fn process(input: &str) -> Result<String, String> {
 
     if substitutions.len() > 0 {
         let mut output = String::new();
-        output += &format!("Found {} substitutions:\n", substitutions.len());
+        output += &format!("Found {} substitution(s):\n", substitutions.len());
         for (password, data) in substitutions {
             output += &format!("{}\n{:?}\n\n", password, data);
         }
@@ -197,15 +204,27 @@ fn process(input: &str) -> Result<String, String> {
 }
 
 fn main() {
-    let args: Vec<String> = env::args().collect();
+    let mut args: Vec<String> = env::args().collect();
     let program = args[0].clone();
+    args = args[1..].to_vec();
 
-    if args.len() < 2 {
+    if args.len() == 0 {
         eprintln!("usage: {} <input>", program);
         return;
     }
 
-    let result = process(&args[1]);
+    // Parse an optional name option to constrain substitutions.
+    let mut name: Option<String> = None;
+    if args.len() > 2 {
+        if args[0] == "--name" || args[1] == "-n" {
+            name = Some(args[1].clone());
+            args = args[2..].to_vec();
+        }
+    }
+
+    // Join all arguments to account for any spacing within the password.
+    let input_string = &args.join("").split_whitespace().collect::<String>();
+    let result = process(input_string, name);
     match result {
         Ok(output) => println!("{}", output),
         Err(err) => eprintln!("{}", err),
