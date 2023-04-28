@@ -94,7 +94,7 @@ impl GameData {
 
         data.checksum = reader.read::<u8>(8).unwrap();
 
-        return data;
+        data
     }
 }
 
@@ -143,9 +143,9 @@ fn decode(input: &str) -> Result<Vec<u8>, String> {
     // Confirm that the CRC is correct
     let last_byte = input_bytes.last_mut().unwrap();
     if crc == *last_byte {
-        return Ok(input_bytes);
+        Ok(input_bytes)
     } else {
-        return Err("Invalid CRC".to_string());
+        Err("Invalid CRC".to_string())
     }
 }
 
@@ -157,11 +157,11 @@ fn process(input: &str, name: Option<String>) -> Result<String, String> {
 
     let mut substitutions: Vec<(String, GameData)> = Vec::new();
     for input_index_to_replace in 0..input.len() {
-        for moji_index in 0..JUMON_MOJI_TABLE.len() {
+        for moji in &JUMON_MOJI_TABLE {
             let mut new_string = String::with_capacity(input.len());
             for (input_index, input_character) in input.chars().enumerate() {
                 if input_index == input_index_to_replace {
-                    new_string.push(JUMON_MOJI_TABLE[moji_index]);
+                    new_string.push(*moji);
                 } else {
                     new_string.push(input_character);
                 }
@@ -171,16 +171,16 @@ fn process(input: &str, name: Option<String>) -> Result<String, String> {
                 // If the player name is known, ignore any substitutions where it is wrong.
                 if let Some(ref player_name) = name {
                     let player_name_chars = player_name.chars().collect::<Vec<char>>();
-                    if player_name_chars != &data.name[..] {
+                    if player_name_chars != data.name {
                         continue;
                     }
                 }
-                substitutions.push((String::from(new_string), data));
+                substitutions.push((new_string, data));
             }
         }
     }
 
-    if substitutions.len() > 0 {
+    if !substitutions.is_empty() {
         let mut output = String::new();
         output += &format!("Found {} substitution(s):\n", substitutions.len());
         for (password, data) in substitutions {
@@ -189,7 +189,7 @@ fn process(input: &str, name: Option<String>) -> Result<String, String> {
         return Ok(output.trim_end().to_string());
     }
 
-    return Err("Recovery failed".to_string());
+    Err("Recovery failed".to_string())
 }
 
 fn main() {
@@ -197,18 +197,16 @@ fn main() {
     let program = args[0].clone();
     args = args[1..].to_vec();
 
-    if args.len() == 0 {
+    if args.is_empty() {
         eprintln!("usage: {} <input>", program);
         return;
     }
 
     // Parse an optional name option to constrain substitutions.
     let mut name: Option<String> = None;
-    if args.len() > 2 {
-        if args[0] == "--name" || args[1] == "-n" {
-            name = Some(args[1].clone());
-            args = args[2..].to_vec();
-        }
+    if args.len() > 2 && (args[0] == "--name" || args[1] == "-n") {
+        name = Some(args[1].clone());
+        args = args[2..].to_vec();
     }
 
     // Join all arguments to account for any spacing within the password.
