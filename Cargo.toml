@@ -1,0 +1,11 @@
+[package]
+name = "rejumon"
+version = "0.1.0"
+authors = ["Raphaël Zumer <rzumer@tebako.net>"]
+description = "ドラゴンクエスト　ふっかつのじゅもん　修正ツール"
+license = "WTFPL"
+repository = "https://github.com/rzumer/rejumon"
+edition = "2021"
+
+[dependencies]
+bitstream-io = "1.6"
