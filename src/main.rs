@@ -1,4 +1,5 @@
 use bitstream_io::{BigEndian, BitRead, BitReader, BitWrite, BitWriter};
+use prettytable::{row, Cell, Row, Table};
 use std::env;
 
 const JUMON_MOJI_TABLE: [char; 64] = [
@@ -98,6 +99,59 @@ impl GameData {
     }
 }
 
+fn print_game_data_table(data: Vec<(String, GameData)>) -> String {
+    // Create the table headers
+    let mut table = Table::new();
+    let header_row = row![
+        "Player Name",
+        "Experience",
+        "Gold",
+        "Weapon",
+        "Armor",
+        "Shield",
+        "Herbs",
+        "Keys",
+        "Items",
+        "Progress Flags",
+        "Checksum"
+    ];
+    table.add_row(header_row.clone());
+
+    // Iterate over each `(String, GameData)` tuple and add its information to the table
+    for (label, game_data) in data {
+        // Add the label as a single row spanning the entire table width, to keep it compact
+        table.add_row(Row::new(vec![Cell::new(&label).with_hspan(header_row.len())]));
+
+        // Add the `GameData` object to a new row as individual cells
+        let mut cells = Vec::new();
+        cells.push(Cell::new(&game_data.name.iter().collect::<String>()));
+        cells.push(Cell::new(&game_data.experience.to_string()));
+        cells.push(Cell::new(&game_data.gold.to_string()));
+        cells.push(Cell::new(&game_data.weapon.to_string()));
+        cells.push(Cell::new(&game_data.armor.to_string()));
+        cells.push(Cell::new(&game_data.shield.to_string()));
+        cells.push(Cell::new(&game_data.herbs.to_string()));
+        cells.push(Cell::new(&game_data.keys.to_string()));
+        cells.push(Cell::new(
+            &game_data.items.iter().map(|&x| x.to_string()).collect::<Vec<_>>().join(""),
+        ));
+        cells.push(Cell::new(
+            &game_data
+                .progress_flags
+                .iter()
+                .map(|&x| if x { "1" } else { "0" })
+                .collect::<Vec<_>>()
+                .join(""),
+        ));
+        cells.push(Cell::new(&game_data.checksum.to_string()));
+
+        table.add_row(Row::new(cells));
+    }
+
+    // Return the table as a `String`
+    table.to_string()
+}
+
 fn decode(input: &str) -> Result<Vec<u8>, String> {
     // Decode characters
     let mut decrypted_characters: [u8; 20] = [0; 20];
@@ -181,12 +235,11 @@ fn process(input: &str, name: Option<String>) -> Result<String, String> {
     }
 
     if !substitutions.is_empty() {
-        let mut output = String::new();
-        output += &format!("Found {} substitution(s):\n", substitutions.len());
-        for (password, data) in substitutions {
-            output += &format!("{}\n{:?}\n\n", password, data);
-        }
-        return Ok(output.trim_end().to_string());
+        return Ok(format!(
+            "Found {} substitution(s):\n\n{}",
+            substitutions.len(),
+            print_game_data_table(substitutions)
+        ));
     }
 
     Err("Recovery failed".to_string())
