@@ -3,9 +3,12 @@ use colored::Colorize;
 use std::env;
 
 fn process_dq1(input: &str, name: Option<String>) -> Result<String, String> {
-    let result = dq1::decode_jumon(input);
-    if result.is_ok() {
-        return Ok("The password is already valid.".to_string());
+    if let Ok(result) = dq1::decode_jumon(input) {
+        let data = dq1::GameData::from_bytes(result.as_slice());
+        return Ok(format!(
+            "The password is already valid:\n\n{}",
+            dq1::tabulate_game_data(vec![(input.to_string(), data)])
+        ));
     }
 
     let mut substitutions: Vec<(String, dq1::GameData)> = Vec::new();
