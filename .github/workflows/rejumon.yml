@@ -1,0 +1,27 @@
+name: Reじゅもん
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Validate dependency tree licenses
+      uses: EmbarkStudios/cargo-deny-action@v1
+    - name: Build
+      run: cargo build --verbose
+    - name: Run rustfmt
+      run: |
+        rustup component add rustfmt \
+        && cargo fmt -- --check
+    - name: Run Clippy
+      run: |
+        rustup component add clippy \
+        && cargo clippy
