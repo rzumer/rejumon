@@ -15,6 +15,58 @@ pub(crate) const NAME_MOJI_TABLE: [char; 64] = [
     'ら', 'り', 'る', 'れ', 'ろ', 'わ', 'を', 'ん', 'っ', 'ゃ', 'ゅ', 'ょ', '゛', '゜', 'ー', '　',
 ];
 
+pub(crate) const WEAPON_TABLE: [&str; 8] = [
+    "（なし）",
+    "たけざお",
+    "こんぼう",
+    "どうのつるぎ",
+    "てつのおの",
+    "はがねのつるぎ",
+    "ほのおのつるぎ",
+    "ロトのつるぎ",
+];
+
+pub(crate) const ARMOR_TABLE: [&str; 8] = [
+    "（なし）",
+    "ぬののふく",
+    "かわのふく",
+    "くさりかたびら",
+    "てつのよろい",
+    "はがねのよろい",
+    "まほうのよろい",
+    "ロトのよろい",
+];
+
+pub(crate) const SHIELD_TABLE: [&str; 4] =
+    ["（なし）", "かわのたて", "てつのたて", "みかがみのたて"];
+
+pub(crate) const ITEM_TABLE: [&str; 16] = [
+    "（なし）",
+    "たいまつ",
+    "せいすい",
+    "キメラのつばさ",
+    "りゅうのうろこ",
+    "ようせいのふえ",
+    "せんしのゆびわ",
+    "ロトのしるし",
+    "おうじょのあい",
+    "のろいのベルト",
+    "ぎんのたてごと",
+    "しのくびかざり",
+    "たいようのいし",
+    "あまぐものつえ",
+    "にじのしずく",
+    "（不正）",
+];
+
+pub(crate) const PROGRESS_FLAG_TABLE: [&str; 5] = [
+    "りゅうのうろこ装備中",
+    "せんしのゆびわ装備中",
+    "ドラゴン倒し済み",
+    "ゴーレム倒し済み",
+    "しのくびかざり取得済み",
+];
+
 #[derive(Clone, Copy, Debug, Default)]
 pub(crate) struct GameData {
     // Player name: 4 characters (from `NAME_MOJI_TABLE`, 6 bits each)
@@ -177,21 +229,24 @@ pub(crate) fn tabulate_game_data(data: Vec<(String, GameData)>) -> String {
         cells.push(Cell::new(&game_data.name.iter().collect::<String>()));
         cells.push(Cell::new(&game_data.experience.to_string()));
         cells.push(Cell::new(&game_data.gold.to_string()));
-        cells.push(Cell::new(&game_data.weapon.to_string()));
-        cells.push(Cell::new(&game_data.armor.to_string()));
-        cells.push(Cell::new(&game_data.shield.to_string()));
+        cells.push(Cell::new(WEAPON_TABLE[game_data.weapon as usize]));
+        cells.push(Cell::new(ARMOR_TABLE[game_data.armor as usize]));
+        cells.push(Cell::new(SHIELD_TABLE[game_data.shield as usize]));
         cells.push(Cell::new(&game_data.herbs.to_string()));
         cells.push(Cell::new(&game_data.keys.to_string()));
         cells.push(Cell::new(
-            &game_data.items.iter().map(|&x| x.to_string()).collect::<Vec<_>>().join(""),
+            &game_data.items.iter().map(|&x| ITEM_TABLE[x as usize]).collect::<Vec<_>>().join("\n"),
         ));
         cells.push(Cell::new(
             &game_data
                 .progress_flags
                 .iter()
-                .map(|&x| if x { "1" } else { "0" })
+                .enumerate()
+                .map(|(idx, &val)| {
+                    if val { "○ " } else { "☓ " }.to_owned() + PROGRESS_FLAG_TABLE[idx]
+                })
                 .collect::<Vec<_>>()
-                .join(""),
+                .join("\n"),
         ));
         cells.push(Cell::new(&game_data.checksum.to_string()));
 
