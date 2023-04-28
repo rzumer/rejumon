@@ -157,10 +157,6 @@ fn decode(input: &str) -> Result<Vec<u8>, String> {
 }
 
 fn process(input: &str, name: Option<String>) -> Result<String, String> {
-    if input.chars().count() != 20 {
-        return Err("Input must be 20 characters.".to_string());
-    }
-
     let result = decode(input);
     if result.is_ok() {
         return Ok("The password is already valid.".to_string());
@@ -224,9 +220,20 @@ fn main() {
 
     // Join all arguments to account for any spacing within the password.
     let input_string = &args.join("").split_whitespace().collect::<String>();
-    let result = process(input_string, name);
-    match result {
-        Ok(output) => println!("{}", output),
-        Err(err) => eprintln!("{}", err),
+    let input_length = input_string.chars().count();
+    match input_length {
+        20 => { // DQ1
+            let result = process(input_string, name);
+            match result {
+                Ok(output) => println!("{}", output),
+                Err(err) => eprintln!("{}", err),
+            }
+        }
+        52 => { // DQ2
+            unimplemented!();
+        }
+        _ => {
+            eprintln!("Invalid input length.");
+        }
     }
 }
