@@ -1,26 +1,18 @@
+use bitstream_io::{BigEndian, BitRead, BitReader, BitWrite, BitWriter};
 use std::env;
-use bitstream_io::{BigEndian, BitReader, BitRead, BitWriter, BitWrite};
 
 const JUMON_MOJI_TABLE: [char; 64] = [
-    'あ', 'い', 'う', 'え', 'お', 'か', 'き', 'く',
-    'け', 'こ', 'さ', 'し', 'す', 'せ', 'そ', 'た',
-    'ち', 'つ', 'て', 'と', 'な', 'に', 'ぬ', 'ね',
-    'の', 'は', 'ひ', 'ふ', 'へ', 'ほ', 'ま', 'み',
-    'む', 'め', 'も', 'や', 'ゆ', 'よ', 'ら', 'り',
-    'る', 'れ', 'ろ', 'わ', 'が', 'ぎ', 'ぐ', 'げ',
-    'ご', 'ざ', 'じ', 'ず', 'ぜ', 'ぞ', 'だ', 'ぢ',
-    'づ', 'で', 'ど', 'ば', 'び', 'ぶ', 'べ', 'ぼ',
+    'あ', 'い', 'う', 'え', 'お', 'か', 'き', 'く', 'け', 'こ', 'さ', 'し', 'す', 'せ', 'そ', 'た',
+    'ち', 'つ', 'て', 'と', 'な', 'に', 'ぬ', 'ね', 'の', 'は', 'ひ', 'ふ', 'へ', 'ほ', 'ま', 'み',
+    'む', 'め', 'も', 'や', 'ゆ', 'よ', 'ら', 'り', 'る', 'れ', 'ろ', 'わ', 'が', 'ぎ', 'ぐ', 'げ',
+    'ご', 'ざ', 'じ', 'ず', 'ぜ', 'ぞ', 'だ', 'ぢ', 'づ', 'で', 'ど', 'ば', 'び', 'ぶ', 'べ', 'ぼ',
 ];
 
 const NAME_MOJI_TABLE: [char; 64] = [
-    '０', '１', '２', '３', '４', '５', '６', '７',
-    '８', '９', 'あ', 'い', 'う', 'え', 'お', 'か',
-    'き', 'く', 'け', 'こ', 'さ', 'し', 'す', 'せ',
-    'そ', 'た', 'ち', 'つ', 'て', 'と', 'な', 'に',
-    'ぬ', 'ね', 'の', 'は', 'ひ', 'ふ', 'へ', 'ほ',
-    'ま', 'み', 'む', 'め', 'も', 'や', 'ゆ', 'よ',
-    'ら', 'り', 'る', 'れ', 'ろ', 'わ', 'を', 'ん',
-    'っ', 'ゃ', 'ゅ', 'ょ', '゛', '゜', 'ー', '　',
+    '０', '１', '２', '３', '４', '５', '６', '７', '８', '９', 'あ', 'い', 'う', 'え', 'お', 'か',
+    'き', 'く', 'け', 'こ', 'さ', 'し', 'す', 'せ', 'そ', 'た', 'ち', 'つ', 'て', 'と', 'な', 'に',
+    'ぬ', 'ね', 'の', 'は', 'ひ', 'ふ', 'へ', 'ほ', 'ま', 'み', 'む', 'め', 'も', 'や', 'ゆ', 'よ',
+    'ら', 'り', 'る', 'れ', 'ろ', 'わ', 'を', 'ん', 'っ', 'ゃ', 'ゅ', 'ょ', '゛', '゜', 'ー', '　',
 ];
 
 #[derive(Clone, Copy, Debug, Default)]
@@ -108,7 +100,7 @@ impl GameData {
 
 fn decode(input: &str) -> Result<Vec<u8>, String> {
     // Decode characters
-    let mut decrypted_characters: [u8; 20] = [ 0; 20 ];
+    let mut decrypted_characters: [u8; 20] = [0; 20];
     let mut last_character_code = 0;
     for (index, character) in input.chars().enumerate() {
         let character_code = JUMON_MOJI_TABLE.iter().position(|&moji| moji == character);
@@ -117,7 +109,8 @@ fn decode(input: &str) -> Result<Vec<u8>, String> {
         }
 
         let character_code_u8 = u8::try_from(character_code.unwrap()).unwrap();
-        let decrypted = character_code_u8.wrapping_sub(last_character_code).wrapping_sub(4) & 0b00111111;
+        let decrypted =
+            character_code_u8.wrapping_sub(last_character_code).wrapping_sub(4) & 0b00111111;
         last_character_code = character_code_u8;
 
         decrypted_characters[index] = decrypted;
@@ -222,14 +215,16 @@ fn main() {
     let input_string = &args.join("").split_whitespace().collect::<String>();
     let input_length = input_string.chars().count();
     match input_length {
-        20 => { // DQ1
+        20 => {
+            // DQ1
             let result = process(input_string, name);
             match result {
                 Ok(output) => println!("{}", output),
                 Err(err) => eprintln!("{}", err),
             }
         }
-        52 => { // DQ2
+        52 => {
+            // DQ2
             unimplemented!();
         }
         _ => {
