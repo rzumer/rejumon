@@ -1,5 +1,4 @@
 mod dq1;
-use colored::Colorize;
 use std::env;
 
 fn process_dq1(input: &str, name: Option<String>) -> Result<String, String> {
@@ -7,26 +6,19 @@ fn process_dq1(input: &str, name: Option<String>) -> Result<String, String> {
         let data = dq1::GameData::from_bytes(result.as_slice());
         return Ok(format!(
             "The password is already valid:\n\n{}",
-            dq1::tabulate_game_data(vec![(input.to_string(), data)])
+            dq1::tabulate_game_data(vec![(input.to_string(), data)], input)
         ));
     }
 
     let mut substitutions: Vec<(String, dq1::GameData)> = Vec::new();
     for input_index_to_replace in 0..input.len() {
         for moji in &dq1::JUMON_MOJI_TABLE {
-            // Generate two strings:
-            // one used for decoding, containing only the raw input characters.
-            // one used for display, with the corrected character set to red.
             let mut new_string = String::with_capacity(input.len());
-            let mut new_formatted_string = String::with_capacity(input.len());
             for (input_index, input_character) in input.chars().enumerate() {
                 if input_index == input_index_to_replace {
                     new_string.push(*moji);
-                    new_formatted_string =
-                        format!("{}{}", new_formatted_string, moji.to_string().red());
                 } else {
                     new_string.push(input_character);
-                    new_formatted_string.push(input_character);
                 }
             }
             if let Ok(decoded) = dq1::decode_jumon(&new_string) {
@@ -47,7 +39,7 @@ fn process_dq1(input: &str, name: Option<String>) -> Result<String, String> {
         return Ok(format!(
             "Found {} substitution(s):\n\n{}",
             substitutions.len(),
-            dq1::tabulate_game_data(substitutions)
+            dq1::tabulate_game_data(substitutions, input)
         ));
     }
 

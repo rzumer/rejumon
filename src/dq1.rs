@@ -1,4 +1,5 @@
 use bitstream_io::{BigEndian, BitRead, BitReader, BitWrite, BitWriter};
+use colored::Colorize;
 use prettytable::{row, Cell, Row, Table};
 
 pub(crate) const JUMON_MOJI_TABLE: [char; 64] = [
@@ -201,7 +202,7 @@ pub(crate) fn decode_jumon(input: &str) -> Result<Vec<u8>, String> {
     }
 }
 
-pub(crate) fn tabulate_game_data(data: Vec<(String, GameData)>) -> String {
+pub(crate) fn tabulate_game_data(data: Vec<(String, GameData)>, input: &str) -> String {
     // Create the table headers
     let mut table = Table::new();
     let header_row = row![
@@ -221,8 +222,20 @@ pub(crate) fn tabulate_game_data(data: Vec<(String, GameData)>) -> String {
 
     // Iterate over each `(String, GameData)` tuple and add its information to the table
     for (label, game_data) in data {
+        // Set the color of any substituted characters in the label to red
+        let mut formatted_label = String::with_capacity(input.len());
+        for (index, input_character) in input.chars().enumerate() {
+            let label_character = label.char_indices().nth(index).unwrap().1;
+            if input_character == label_character {
+                formatted_label.push(input_character);
+            } else {
+                formatted_label =
+                    format!("{}{}", formatted_label, label_character.to_string().red());
+            }
+        }
+
         // Add the label as a single row spanning the entire table width, to keep it compact
-        table.add_row(Row::new(vec![Cell::new(&label).with_hspan(header_row.len())]));
+        table.add_row(Row::new(vec![Cell::new(&formatted_label).with_hspan(header_row.len())]));
 
         // Add the `GameData` object to a new row as individual cells
         let mut cells = Vec::new();
