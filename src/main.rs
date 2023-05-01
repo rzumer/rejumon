@@ -48,6 +48,11 @@ fn process_dq1(
                 if data.items.contains(&(dq1::ITEM_TABLE.len() as u8 - 1)) {
                     continue;
                 }
+                // Exclude codes that generate more than the maximum amount of herbs or keys.
+                if data.herbs > 6 || data.keys > 6 {
+                    continue;
+                }
+
                 substitutions.push((new_string.clone(), data));
             }
         }
