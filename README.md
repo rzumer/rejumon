@@ -13,7 +13,7 @@
 `rejumon [--name <name>] [--flags <flags>] [--keep-checksum] <input>`
 
 * --name <name>: 名前を指定して固定します。
-* --flags <flags>: フラグを指定して固定します。フラグの形式は5桁のバイナリ（例：10111）となります。各フラグの意味については、dq1.rs の PROGRESS_FLAG_TABLE を参照してください。
+* --flags <flags>: フラグを指定して固定します。フラグの形式は5桁のバイナリ（例：10111）となります。各フラグの意味については、dq1.rs の PROGRESS_FLAG_TABLE か以下のスクリーンショットを参照してください。
 * --keep-checksum: チェックサム（チェック値）を固定します。
 
 例:
