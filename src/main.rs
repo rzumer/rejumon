@@ -150,6 +150,10 @@ fn process_dq2(
                         continue;
                     }
                 }
+                // Exclude codes that generate an invalid hero name.
+                if data.hero_name.iter().any(|&c| c == '\0') {
+                    continue;
+                }
                 // Exclude codes that generate an invalid location.
                 if dq2::LOCATION_TABLE.get(data.location as usize).is_none() {
                     continue;
