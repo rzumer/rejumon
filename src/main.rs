@@ -114,11 +114,12 @@ fn process_dq2(
     keep_checksum: bool,
 ) -> Result<String, String> {
     if let Ok(result) = dq2::decode_jumon(input) {
-        let data = dq2::GameData::from_bytes(result.as_slice());
-        return Ok(format!(
-            "The password is already valid:\n\n{}",
-            dq2::tabulate_game_data(vec![(input.to_string(), data)], input)
-        ));
+        if let Ok(data) = dq2::GameData::from_bytes(result.as_slice()) {
+            return Ok(format!(
+                "The password is already valid:\n\n{}",
+                dq2::tabulate_game_data(vec![(input.to_string(), data)], input)
+            ));
+        }
     }
 
     let mut substitutions: Vec<(String, dq2::GameData)> = Vec::new();
@@ -134,39 +135,40 @@ fn process_dq2(
                 }
             }
             if let Ok(decoded) = dq2::decode_jumon(&new_string) {
-                let data = dq2::GameData::from_bytes(decoded.as_slice());
-                // If the player name is known, ignore any substitutions where it is wrong.
-                if let Some(ref player_name) = name {
-                    let player_name_chars = player_name.chars().collect::<Vec<char>>();
-                    if player_name_chars != data.hero_name {
+                if let Ok(data) = dq2::GameData::from_bytes(decoded.as_slice()) {
+                    // If the player name is known, ignore any substitutions where it is wrong.
+                    if let Some(ref player_name) = name {
+                        let player_name_chars = player_name.chars().collect::<Vec<char>>();
+                        if player_name_chars != data.hero_name {
+                            continue;
+                        }
+                    }
+                    // If progress flags are specified, ignore any substitutions where they change.
+                    if let Some(flags) = progress_flags {
+                        let decoded_flags =
+                            data.progress_flags.iter().fold(0, |acc, &b| (acc << 1) | b as u8);
+                        if flags != decoded_flags {
+                            continue;
+                        }
+                    }
+                    // Exclude codes that generate an invalid hero name.
+                    if data.hero_name.iter().any(|&c| c == '\0') {
                         continue;
                     }
-                }
-                // If progress flags are specified, ignore any substitutions where they change.
-                if let Some(flags) = progress_flags {
-                    let decoded_flags =
-                        data.progress_flags.iter().fold(0, |acc, &b| (acc << 1) | b as u8);
-                    if flags != decoded_flags {
+                    // Exclude codes that generate an invalid location.
+                    if dq2::LOCATION_TABLE.get(data.location as usize).is_none() {
                         continue;
                     }
-                }
-                // Exclude codes that generate an invalid hero name.
-                if data.hero_name.iter().any(|&c| c == '\0') {
-                    continue;
-                }
-                // Exclude codes that generate an invalid location.
-                if dq2::LOCATION_TABLE.get(data.location as usize).is_none() {
-                    continue;
-                }
-                // Exclude codes that generate more than the maximum amount of experience.
-                if data.hero_experience > 1000000
-                    || data.prince_experience > 1000000
-                    || data.princess_experience > 1000000
-                {
-                    continue;
-                }
+                    // Exclude codes that generate more than the maximum amount of experience.
+                    if data.hero_experience > 1000000
+                        || data.prince_experience > 1000000
+                        || data.princess_experience > 1000000
+                    {
+                        continue;
+                    }
 
-                substitutions.push((new_string.clone(), data));
+                    substitutions.push((new_string.clone(), data));
+                }
             }
         }
     }

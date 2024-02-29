@@ -1,6 +1,7 @@
 use bitstream_io::{BigEndian, BitRead, BitReader, BitWrite, BitWriter};
 use colored::Colorize;
 use prettytable::{row, Cell, Row, Table};
+use std::io::ErrorKind::InvalidData;
 
 pub(crate) const JUMON_MOJI_TABLE: [char; 64] = [
     'あ', 'い', 'う', 'え', 'お', 'か', 'き', 'く', 'け', 'こ', 'さ', 'し', 'す', 'せ', 'そ', 'た',
@@ -135,75 +136,76 @@ pub(crate) struct GameData {
 }
 
 impl GameData {
-    pub(crate) fn from_bytes(bytes: &[u8]) -> Self {
+    pub(crate) fn from_bytes(bytes: &[u8]) -> Result<Self, std::io::Error> {
         let mut data = Self::default();
 
         let mut reader = BitReader::endian(bytes, BigEndian);
 
-        data.checksum |= reader.read::<u16>(5).unwrap();
-        data.location = reader.read::<u8>(3).unwrap();
+        data.checksum |= reader.read::<u16>(5)?;
+        data.location = reader.read::<u8>(3)?;
 
         let mut name_char = 0u8; // heroName[1]
-        data.hero_name[2] = NAME_MOJI_TABLE[reader.read::<u8>(6).unwrap() as usize];
-        name_char |= reader.read::<u8>(2).unwrap() << 4;
+        data.hero_name[2] = NAME_MOJI_TABLE[reader.read::<u8>(6)? as usize];
+        name_char |= reader.read::<u8>(2)? << 4;
 
-        data.gold |= reader.read::<u16>(8).unwrap() << 8;
+        data.gold |= reader.read::<u16>(8)? << 8;
 
-        name_char |= reader.read::<u8>(2).unwrap() << 1;
-        data.hero_name[0] = NAME_MOJI_TABLE[reader.read::<u8>(6).unwrap() as usize];
+        name_char |= reader.read::<u8>(2)? << 1;
+        data.hero_name[0] = NAME_MOJI_TABLE[reader.read::<u8>(6)? as usize];
 
-        data.gold |= reader.read::<u16>(8).unwrap();
+        data.gold |= reader.read::<u16>(8)?;
 
-        name_char |= reader.read::<u8>(1).unwrap();
-        data.hero_name[3] = NAME_MOJI_TABLE[reader.read::<u8>(6).unwrap() as usize];
-        name_char |= reader.read::<u8>(1).unwrap() << 3;
+        name_char |= reader.read::<u8>(1)?;
+        data.hero_name[3] = NAME_MOJI_TABLE[reader.read::<u8>(6)? as usize];
+        name_char |= reader.read::<u8>(1)? << 3;
         data.hero_name[1] = NAME_MOJI_TABLE[name_char as usize];
 
-        data.encryption_key |= reader.read::<u8>(1).unwrap();
-        data.progress_flags[0] = reader.read::<u8>(1).unwrap() != 0;
-        data.progress_flags[1] = reader.read::<u8>(1).unwrap() != 0;
-        data.progress_flags[2] = reader.read::<u8>(1).unwrap() != 0;
-        data.progress_flags[3] = reader.read::<u8>(1).unwrap() != 0;
-        data.progress_flags[4] = reader.read::<u8>(1).unwrap() != 0;
-        data.progress_flags[5] = reader.read::<u8>(1).unwrap() != 0;
-        data.progress_flags[6] = reader.read::<u8>(1).unwrap() != 0;
+        data.encryption_key |= reader.read::<u8>(1)?;
+        data.progress_flags[0] = reader.read::<u8>(1)? != 0;
+        data.progress_flags[1] = reader.read::<u8>(1)? != 0;
+        data.progress_flags[2] = reader.read::<u8>(1)? != 0;
+        data.progress_flags[3] = reader.read::<u8>(1)? != 0;
+        data.progress_flags[4] = reader.read::<u8>(1)? != 0;
+        data.progress_flags[5] = reader.read::<u8>(1)? != 0;
+        data.progress_flags[6] = reader.read::<u8>(1)? != 0;
 
-        data.encryption_key |= reader.read::<u8>(3).unwrap() << 1;
-        data.crests[0] = reader.read::<u8>(1).unwrap() != 0;
-        data.crests[1] = reader.read::<u8>(1).unwrap() != 0;
-        data.crests[2] = reader.read::<u8>(1).unwrap() != 0;
-        data.crests[3] = reader.read::<u8>(1).unwrap() != 0;
-        data.crests[4] = reader.read::<u8>(1).unwrap() != 0;
+        data.encryption_key |= reader.read::<u8>(3)? << 1;
+        data.crests[0] = reader.read::<u8>(1)? != 0;
+        data.crests[1] = reader.read::<u8>(1)? != 0;
+        data.crests[2] = reader.read::<u8>(1)? != 0;
+        data.crests[3] = reader.read::<u8>(1)? != 0;
+        data.crests[4] = reader.read::<u8>(1)? != 0;
 
         // These two bits carry the least 2 significant bits of the final
         // unaligned princess item ID if all characters are carrying 8 items.
-        let final_bits = reader.read::<u8>(2).unwrap();
-        data.checksum |= reader.read::<u16>(6).unwrap() << 5;
+        let final_bits = reader.read::<u8>(2)?;
+        data.checksum |= reader.read::<u16>(6)? << 5;
 
-        data.hero_experience |= reader.read::<u32>(16).unwrap();
-        data.hero_experience |= reader.read::<u32>(4).unwrap() << 16;
+        data.hero_experience |= reader.read::<u32>(16)?;
+        data.hero_experience |= reader.read::<u32>(4)? << 16;
 
-        let item_count = reader.read::<u8>(4).unwrap();
+        let item_count = reader.read::<u8>(4)?;
         for i in 0..item_count {
-            data.hero_items[i as usize] = reader.read::<u8>(7).unwrap();
+            *data.hero_items.get_mut(i as usize).ok_or(InvalidData)? = reader.read::<u8>(7)?;
         }
 
-        data.prince_flag = reader.read::<u8>(1).unwrap() != 0;
+        data.prince_flag = reader.read::<u8>(1)? != 0;
         if data.prince_flag {
-            data.prince_experience |= reader.read::<u32>(16).unwrap();
-            data.prince_experience |= reader.read::<u32>(4).unwrap() << 16;
+            data.prince_experience |= reader.read::<u32>(16)?;
+            data.prince_experience |= reader.read::<u32>(4)? << 16;
 
-            let item_count = reader.read::<u8>(4).unwrap();
+            let item_count = reader.read::<u8>(4)?;
             for i in 0..item_count {
-                data.prince_items[i as usize] = reader.read::<u8>(7).unwrap();
+                *data.prince_items.get_mut(i as usize).ok_or(InvalidData)? =
+                    reader.read::<u8>(7)?;
             }
 
-            data.princess_flag = reader.read::<u8>(1).unwrap() != 0;
+            data.princess_flag = reader.read::<u8>(1)? != 0;
             if data.princess_flag {
-                data.princess_experience |= reader.read::<u32>(16).unwrap();
-                data.princess_experience |= reader.read::<u32>(4).unwrap() << 16;
+                data.princess_experience |= reader.read::<u32>(16)?;
+                data.princess_experience |= reader.read::<u32>(4)? << 16;
 
-                let item_count = reader.read::<u8>(4).unwrap();
+                let item_count = reader.read::<u8>(4)?;
                 for i in 0..item_count {
                     // If all characters are carrying 8 items, the save data is
                     // compressed by setting the 2 least significant bits of the
@@ -212,8 +214,8 @@ impl GameData {
                     // 5 most significant bits of the item ID, then try to
                     // read the 2 least significant bits, and substitute them
                     // with the bits moved earlier in the stream if it fails.
-                    let high_bits = reader.read::<u8>(5).unwrap();
-                    data.princess_items[i as usize] = high_bits << 2
+                    let high_bits = reader.read::<u8>(5)?;
+                    *data.princess_items.get_mut(i as usize).ok_or(InvalidData)? = high_bits << 2
                         | match reader.read::<u8>(2) {
                             Ok(val) => val,
                             Err(_) => final_bits,
@@ -222,7 +224,7 @@ impl GameData {
             }
         }
 
-        data
+        Ok(data)
     }
 }
 
