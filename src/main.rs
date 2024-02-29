@@ -121,7 +121,61 @@ fn process_dq2(
         ));
     }
 
-    todo!()
+    let mut substitutions: Vec<(String, dq2::GameData)> = Vec::new();
+    let max_index = if keep_checksum { input.len() - 1 } else { input.len() };
+    for input_index_to_replace in 0..max_index {
+        for moji in &dq2::JUMON_MOJI_TABLE {
+            let mut new_string = String::with_capacity(input.len());
+            for (input_index, input_character) in input.chars().enumerate() {
+                if input_index == input_index_to_replace {
+                    new_string.push(*moji);
+                } else {
+                    new_string.push(input_character);
+                }
+            }
+            if let Ok(decoded) = dq2::decode_jumon(&new_string) {
+                let data = dq2::GameData::from_bytes(decoded.as_slice());
+                // If the player name is known, ignore any substitutions where it is wrong.
+                if let Some(ref player_name) = name {
+                    let player_name_chars = player_name.chars().collect::<Vec<char>>();
+                    if player_name_chars != data.hero_name {
+                        continue;
+                    }
+                }
+                // If progress flags are specified, ignore any substitutions where they change.
+                if let Some(flags) = progress_flags {
+                    let decoded_flags =
+                        data.progress_flags.iter().fold(0, |acc, &b| (acc << 1) | b as u8);
+                    if flags != decoded_flags {
+                        continue;
+                    }
+                }
+                // Exclude codes that generate an invalid location.
+                if dq2::LOCATION_TABLE.get(data.location as usize).is_none() {
+                    continue;
+                }
+                // Exclude codes that generate more than the maximum amount of experience.
+                if data.hero_experience > 1000000
+                    || data.prince_experience > 1000000
+                    || data.princess_experience > 1000000
+                {
+                    continue;
+                }
+
+                substitutions.push((new_string.clone(), data));
+            }
+        }
+    }
+
+    if !substitutions.is_empty() {
+        return Ok(format!(
+            "Found {} substitution(s):\n\n{}",
+            substitutions.len(),
+            dq2::tabulate_game_data(substitutions, input)
+        ));
+    }
+
+    Err("Recovery failed.".to_string())
 }
 
 fn main() {
