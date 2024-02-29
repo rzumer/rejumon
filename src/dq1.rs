@@ -261,7 +261,9 @@ pub(crate) fn tabulate_game_data(data: Vec<(String, GameData)>, input: &str) -> 
                 .collect::<Vec<_>>()
                 .join("\n"),
         ));
-        cells.push(Cell::new(&game_data.checksum.to_string()));
+        cells.push(Cell::new(
+            format!("{} (Key: {})", game_data.checksum, game_data.encryption_key).as_str(),
+        ));
 
         table.add_row(Row::new(cells));
     }
