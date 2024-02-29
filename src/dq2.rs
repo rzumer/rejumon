@@ -268,8 +268,8 @@ pub(crate) fn decode_jumon(input: &str) -> Result<Vec<u8>, String> {
         let mut divisor = byte;
         for _bit in 0..8 {
             let carry_bit = ((crc >> 8) as u8 ^ divisor) & 0b1000_0000 != 0;
-            crc = (crc << 1) & 0xffff;
-            divisor = (divisor << 1) & 0xff;
+            crc <<= 1;
+            divisor <<= 1;
             if carry_bit {
                 crc ^= 0x1021;
             }
@@ -283,7 +283,7 @@ pub(crate) fn decode_jumon(input: &str) -> Result<Vec<u8>, String> {
     input_bytes[8] ^= checksum_bytes.1;
 
     // Confirm that the CRC is correct
-    if (crc & 0b0000_0111_1111_1111) == expected.into() {
+    if (crc & 0b0000_0111_1111_1111) == expected {
         Ok(input_bytes)
     } else {
         Err("Invalid CRC".to_string())
@@ -327,10 +327,10 @@ pub(crate) fn tabulate_game_data(data: Vec<(String, GameData)>, input: &str) -> 
         // Add the `GameData` object to a new row as individual cells
         let mut cells = Vec::new();
         cells.push(Cell::new(&game_data.hero_name.iter().collect::<String>()));
-        cells.push(Cell::new(&LOCATION_TABLE[game_data.location as usize]));
+        cells.push(Cell::new(LOCATION_TABLE[game_data.location as usize]));
         cells.push(Cell::new(&format!(
             "Hero: {}\nPrince: {}\nPrincess: {}",
-            game_data.hero_experience.to_string(),
+            game_data.hero_experience,
             if game_data.prince_flag {
                 game_data.prince_experience.to_string()
             } else {

@@ -4,7 +4,7 @@ use std::env;
 
 use colored::Colorize;
 
-fn split_dakuten(input: &String) -> String {
+fn split_dakuten(input: &str) -> String {
     let mut result = String::with_capacity(input.len());
     for c in input.chars() {
         match c {
