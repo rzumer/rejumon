@@ -1,6 +1,6 @@
 [package]
 name = "rejumon"
-version = "0.2.0"
+version = "1.0.0"
 authors = ["Raphaël Zumer <rzumer@tebako.net>"]
 description = "ドラゴンクエストⅠ・Ⅱ　ふっかつのじゅもん　修正ツール"
 license = "WTFPL"
