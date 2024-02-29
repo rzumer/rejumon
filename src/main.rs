@@ -1,6 +1,41 @@
 mod dq1;
 use std::env;
 
+fn split_dakuten(input: &String) -> String {
+    let mut result = String::with_capacity(input.len());
+    for c in input.chars() {
+        match c {
+            'が' => result.push_str("か゛"),
+            'ぎ' => result.push_str("き゛"),
+            'ぐ' => result.push_str("く゛"),
+            'げ' => result.push_str("け゛"),
+            'ご' => result.push_str("こ゛"),
+            'ざ' => result.push_str("さ゛"),
+            'じ' => result.push_str("し゛"),
+            'ず' => result.push_str("す゛"),
+            'ぜ' => result.push_str("せ゛"),
+            'ぞ' => result.push_str("そ゛"),
+            'だ' => result.push_str("た゛"),
+            'ぢ' => result.push_str("ち゛"),
+            'づ' => result.push_str("つ゛"),
+            'で' => result.push_str("て゛"),
+            'ど' => result.push_str("と゛"),
+            'ば' => result.push_str("は゛"),
+            'び' => result.push_str("ひ゛"),
+            'ぶ' => result.push_str("ふ゛"),
+            'べ' => result.push_str("へ゛"),
+            'ぼ' => result.push_str("ほ゛"),
+            'ぱ' => result.push_str("は゜"),
+            'ぴ' => result.push_str("ひ゜"),
+            'ぷ' => result.push_str("ふ゜"),
+            'ぺ' => result.push_str("へ゜"),
+            'ぽ' => result.push_str("ほ゜"),
+            _ => result.push(c),
+        }
+    }
+    result
+}
+
 fn process_dq1(
     input: &str,
     name: Option<String>,
@@ -87,7 +122,7 @@ fn main() {
         let arg: &str = &args[0];
         match arg {
             "--name" | "-n" => {
-                name = Some(args[1].clone());
+                name = Some(split_dakuten(&args[1]));
                 args = args[2..].to_vec();
             }
             "--flags" | "-f" => {
