@@ -1,4 +1,5 @@
 mod dq1;
+mod dq2;
 use std::env;
 
 fn split_dakuten(input: &String) -> String {
@@ -101,7 +102,24 @@ fn process_dq1(
         ));
     }
 
-    Err("Recovery failed".to_string())
+    Err("Recovery failed.".to_string())
+}
+
+fn process_dq2(
+    input: &str,
+    name: Option<String>,
+    progress_flags: Option<u8>,
+    keep_checksum: bool,
+) -> Result<String, String> {
+    if let Ok(result) = dq2::decode_jumon(input) {
+        let data = dq2::GameData::from_bytes(result.as_slice());
+        return Ok(format!(
+            "The password is already valid:\n\n{}",
+            dq2::tabulate_game_data(vec![(input.to_string(), data)], input)
+        ));
+    }
+
+    todo!()
 }
 
 fn main() {
@@ -142,21 +160,24 @@ fn main() {
     // Join all arguments to account for any spacing within the password.
     let input_string = &args.join("").split_whitespace().collect::<String>();
     let input_length = input_string.chars().count();
-    match input_length {
-        20 => {
-            // DQ1
-            let result = process_dq1(input_string, name, progress_flags, keep_checksum);
-            match result {
-                Ok(output) => println!("{}", output),
-                Err(err) => eprintln!("{}", err),
+    let result: Result<String, String> =
+        if input_string.chars().all(|c| dq1::JUMON_MOJI_TABLE.contains(&c)) && input_length == 20 {
+            let dq1_res = process_dq1(input_string, name.clone(), progress_flags, keep_checksum);
+            if dq1_res.is_err() {
+                process_dq2(input_string, name, progress_flags, keep_checksum)
+            } else {
+                dq1_res
             }
-        }
-        52 => {
-            // DQ2
-            unimplemented!();
-        }
-        _ => {
-            eprintln!("Invalid input length.");
-        }
+        } else if input_length <= 52
+            && input_string.chars().all(|c| dq2::JUMON_MOJI_TABLE.contains(&c))
+        {
+            process_dq2(input_string, name, progress_flags, keep_checksum)
+        } else {
+            Err("Invalid input.".to_string())
+        };
+
+    match result {
+        Ok(output) => println!("{}", output),
+        Err(err) => eprintln!("{}", err),
     }
 }
