@@ -329,8 +329,16 @@ pub(crate) fn tabulate_game_data(data: Vec<(String, GameData)>, input: &str) -> 
         cells.push(Cell::new(&format!(
             "Hero: {}\nPrince: {}\nPrincess: {}",
             game_data.hero_experience.to_string(),
-            game_data.prince_experience.to_string(),
-            game_data.princess_experience.to_string()
+            if game_data.prince_flag {
+                game_data.prince_experience.to_string()
+            } else {
+                "N/A".to_string()
+            },
+            if game_data.princess_flag {
+                game_data.princess_experience.to_string()
+            } else {
+                "N/A".to_string()
+            },
         )));
         cells.push(Cell::new(&game_data.gold.to_string()));
         cells.push(Cell::new(
