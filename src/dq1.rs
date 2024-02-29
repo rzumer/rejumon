@@ -152,29 +152,31 @@ impl GameData {
 }
 
 pub(crate) fn decode_jumon(input: &str) -> Result<Vec<u8>, String> {
-    // Decode characters
-    let mut decrypted_characters: [u8; 20] = [0; 20];
-    let mut last_character_code = 0;
-    for (index, character) in input.chars().enumerate() {
-        let character_code = JUMON_MOJI_TABLE.iter().position(|&moji| moji == character);
-        if character_code.is_none() {
-            return Err(format!("Unsupported input character: {}", character));
-        }
+    // Convert input unicode characters to their corresponding 6-bit character codes
+    let jumon_chars: Vec<u8> = input
+        .chars()
+        .map(|c| {
+            JUMON_MOJI_TABLE
+                .iter()
+                .position(|&moji| moji == c)
+                .map(|index| index as u8)
+                .ok_or_else(|| format!("Unsupported input character: {}", c))
+        })
+        .collect::<Result<Vec<_>, _>>()?;
 
-        let character_code_u8 = u8::try_from(character_code.unwrap()).unwrap();
-        let decrypted =
-            character_code_u8.wrapping_sub(last_character_code).wrapping_sub(4) & 0b00111111;
-        last_character_code = character_code_u8;
-
-        decrypted_characters[index] = decrypted;
+    // Decrypt characters.
+    let mut decrypted = vec![];
+    let key = 0b100;
+    for (prev, cur) in std::iter::once(0).chain(jumon_chars.clone()).zip(jumon_chars) {
+        decrypted.push(cur.wrapping_sub(prev).wrapping_sub(key) & 0b0011_1111);
     }
 
     // Pack characters into bytes
     let mut writer = BitWriter::endian(Vec::new(), BigEndian);
-    for character in decrypted_characters.iter().rev() {
+    for character in decrypted.iter().rev() {
         writer.write(6, *character).unwrap();
     }
-    let mut input_bytes = writer.into_writer();
+    let input_bytes = writer.into_writer();
 
     // Calculate the correct checksum (XMODEM-CRC)
     let mut crc = 0_u8;
@@ -194,8 +196,7 @@ pub(crate) fn decode_jumon(input: &str) -> Result<Vec<u8>, String> {
     }
 
     // Confirm that the CRC is correct
-    let last_byte = input_bytes.last_mut().unwrap();
-    if crc == *last_byte {
+    if crc == *input_bytes.last().unwrap() {
         Ok(input_bytes)
     } else {
         Err("Invalid CRC".to_string())
