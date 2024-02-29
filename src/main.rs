@@ -230,7 +230,8 @@ fn main() {
                 println!("{}", "DQ1".to_owned().bold().purple());
                 dq1_res
             }
-        } else if input_length <= 52
+        } else if input_length > 0
+            && input_length <= 52
             && input_string.chars().all(|c| dq2::JUMON_MOJI_TABLE.contains(&c))
         {
             println!("{}", "DQ2".to_owned().bold().red());
