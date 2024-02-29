@@ -2,6 +2,8 @@ mod dq1;
 mod dq2;
 use std::env;
 
+use colored::Colorize;
+
 fn split_dakuten(input: &String) -> String {
     let mut result = String::with_capacity(input.len());
     for c in input.chars() {
@@ -164,13 +166,16 @@ fn main() {
         if input_string.chars().all(|c| dq1::JUMON_MOJI_TABLE.contains(&c)) && input_length == 20 {
             let dq1_res = process_dq1(input_string, name.clone(), progress_flags, keep_checksum);
             if dq1_res.is_err() {
+                println!("{}", "DQ2".to_owned().bold().red());
                 process_dq2(input_string, name, progress_flags, keep_checksum)
             } else {
+                println!("{}", "DQ1".to_owned().bold().purple());
                 dq1_res
             }
         } else if input_length <= 52
             && input_string.chars().all(|c| dq2::JUMON_MOJI_TABLE.contains(&c))
         {
+            println!("{}", "DQ2".to_owned().bold().red());
             process_dq2(input_string, name, progress_flags, keep_checksum)
         } else {
             Err("Invalid input.".to_string())
